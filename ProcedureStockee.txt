@@ -1,0 +1,43 @@
+BEGIN
+        DECLARE idSession, idFormation,maxSessions,nbPlaces,nbInscrits integer;
+		DECLARE formation,niveau,description,date varchar(50);
+		DECLARE ferme tinyint; 
+         DECLARE fin TINYINT DEFAULT 0;  
+        
+        DECLARE curseur1 CURSOR FOR SELECT 
+        session_formation.id, formation.id, FORMATION.libelle,FORMATION.niveau,FORMATION.description,SESSION_FORMATION.date_debut,SESSION_FORMATION.nb_places ,SESSION_FORMATION.nb_inscrits, SESSION_FORMATION.close
+        FROM session_formation,plan_formation,formation
+        WHERE session_formation.formation_id = plan_formation.formation_id
+        AND formation.id = session_formation.formation_id
+		AND close = 0
+        AND (nb_places>  nb_inscrits)
+        AND formation.id IN
+        (SELECT Formation_id
+        FROM plan_formation
+        WHERE Client_id = idClient) 
+        AND date_debut BETWEEN CURRENT_DATE AND DATE_ADD(CURRENT_DATE,INTERVAL 2 MONTH)
+        AND session_formation.id NOT IN
+        (SELECT session_formation_id 
+         FROM inscription
+         WHERE client_id = idClient);
+        
+      	DECLARE CONTINUE HANDLER FOR NOT FOUND SET fin = 1; 
+         
+        OPEN curseur1; # ouverture du curseur1
+        
+        DELETE FROM sessions_autorisees; 
+        
+         loop_curseur: LOOP    
+         
+ 			FETCH curseur1 INTO idSession, idFormation,formation,niveau,description,date,nbPlaces,nbInscrits,ferme;  
+ 
+    		IF fin = 1 THEN 
+        		LEAVE loop_curseur; # sort
+        	END IF;
+	        
+        	INSERT INTO sessions_autorisees(libelle,niveau,description,date,nbPlaces,nbInscrits,ferme,session_id,formation_id,client_id)
+			VALUES(formation,niveau,description,date,nbPlaces,nbInscrits,ferme,idSession, idFormation, idClient);
+        END LOOP;
+        
+        CLOSE curseur1; # fermeture du curseur1
+END

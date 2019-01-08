@@ -1,0 +1,63 @@
+{% extends "FormArmorBundle::client_layout.html.twig" %}
+{% block FormArmor_body %}
+	<h3>Confirmation d'inscription</h3>
+
+
+	<div class="well">
+	  {{ form_start(form, {'attr': {'class': 'form-horizontal'}}) }}
+
+	  {# Les erreurs g�n�rales du formulaire. #}
+	  {{ form_errors(form) }}
+
+	  {# G�n�ration du controle de fa�on d�taill�e pour l'exemple #}
+		  {# G�n�ration du label. #}
+		  {{ form_label(form.dateInscription, "Date d'inscription : ", {'label_attr': {'class': 'form-label'}}) }}
+		  {# Affichage des erreurs pour ce champ pr�cis. #}
+		  {{ form_errors(form.dateInscription) }}
+		  {# G�n�ration de l'input. #}
+		  {{ form_widget(form.dateInscription, {'attr': {'class': 'form-control'}}) }}
+	  
+	  {# G�n�ration du controle de fa�on d�taill�e pour l'exemple #}
+		  {# G�n�ration du label. #}
+		  {{ form_label(form.client, "Client : ", {'label_attr': {'class': 'form-label'}}) }}
+		  {# Affichage des erreurs pour ce champ pr�cis. #}
+		  {{ form_errors(form.client) }}
+		  {# G�n�ration de l'input. #}
+		  {{ form_widget(form.client, {'attr': {'class': 'form-control'}}) }}
+
+		{# G�n�ration du controle de fa�on d�taill�e pour l'exemple #}
+		{# G�n�ration du label. #}
+		{{ form_label(form.sessionFormation, "Formation : ", {'label_attr': {'class': 'form-label'}}) }}
+		{# Affichage des erreurs pour ce champ pr�cis. #}
+		{{ form_errors(form.sessionFormation) }}
+		{# G�n�ration de l'input. #}
+		{{ form_widget(form.sessionFormation, {'attr': {'class': 'form-control'}}) }}
+
+	  <br/>
+	  {# Pour le bouton, pas de label ni d'erreur, on affiche juste le widget #}
+	  {{ form_widget(form.Valider, {'attr': {'class': 'btn btn-primary'}}) }}
+
+		{# Bouton permettant de revenir � la page pr�c�dente sans valider #}
+	  <input type="button" value="Retour" class = "btn btn-danger" onClick="history.go(-1)" />
+
+	  {# G�n�ration automatique des champs pas encore �crits.
+		 Dans cet exemple, ce serait le champ CSRF (g�r� automatiquement par Symfony !)
+		 et tous les champs cach�s (type � hidden �). #}
+	  {{ form_rest(form) }}
+
+	  {# Fermeture de la balise <form> du formulaire HTML #}
+	  {{ form_end(form) }}
+	</div>
+	{# Affichage des messages �ventuels. Par exemple apr�s une insertion via un formulaire #}
+	{% for flash_message in app.session.flashBag.get('info') %}
+		<div class="flash-notice">
+			<script>alert('{{ flash_message }}');</script>
+		</div>
+	{% endfor %}
+	<script>
+		$(function() {
+			$('#menu1').attr('class', 'active');
+		});
+	</script>
+	
+{% endblock %}

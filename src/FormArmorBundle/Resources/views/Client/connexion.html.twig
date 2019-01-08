@@ -1,0 +1,51 @@
+{% extends "FormArmorBundle::layout.html.twig" %}
+{% block FormArmor_body %}
+	<h3>Formulaire d'authentification</h3>
+
+
+	<div class="well">
+	  {{ form_start(form, {'attr': {'class': 'form-horizontal'}}) }}
+
+	  {# Les erreurs g�n�rales du formulaire. #}
+	  {{ form_errors(form) }}
+
+	  {# G�n�ration du controle de fa�on d�taill�e pour l'exemple #}
+		  {# G�n�ration du label. #}
+		  {{ form_label(form.nom, "Nom : ", {'label_attr': {'class': 'form-label'}}) }}
+		  {# Affichage des erreurs pour ce champ pr�cis. #}
+		  {{ form_errors(form.nom) }}
+		  {# G�n�ration de l'input. #}
+		  {{ form_widget(form.nom, {'attr': {'class': 'form-control'}}) }}
+	  
+	  {# G�n�ration du controle de fa�on d�taill�e pour l'exemple #}
+		  {# G�n�ration du label. #}
+		  {{ form_label(form.password, "Mot de passe : ", {'label_attr': {'class': 'form-label'}}) }}
+		  {# Affichage des erreurs pour ce champ pr�cis. #}
+		  {{ form_errors(form.password) }}
+		  {# G�n�ration de l'input. #}
+		  {{ form_widget(form.password, {'attr': {'class': 'form-control'}}) }}
+	  <br/>
+	  {# Pour le bouton, pas de label ni d'erreur, on affiche juste le widget #}
+	  {{ form_widget(form.Envoyer, {'attr': {'class': 'btn btn-primary'}}) }}
+
+	  {# G�n�ration automatique des champs pas encore �crits.
+		 Dans cet exemple, ce serait le champ CSRF (g�r� automatiquement par Symfony !)
+		 et tous les champs cach�s (type � hidden �). #}
+	  {{ form_rest(form) }}
+
+	  {# Fermeture de la balise <form> du formulaire HTML #}
+	  {{ form_end(form) }}
+	</div>
+	{# Affichage des messages �ventuels. Par exemple apr�s une insertion via un formulaire #}
+	{% for flash_message in app.session.flashBag.get('connection') %}
+		<div class="flash-notice">
+			<script>alert('{{ flash_message }}');</script>
+		</div>
+	{% endfor %}
+	<script>
+		$(function() {
+			$('#menu3').attr('class', 'active');
+		});
+	</script>
+	
+{% endblock %}
