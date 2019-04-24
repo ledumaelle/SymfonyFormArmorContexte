@@ -42,24 +42,24 @@ class ClientController extends Controller
 			{
 				// Récupération des données saisies (le nom des controles sont du style nomDuFormulaire[nomDuChamp] (ex. : client[nom] pour le nom) )
 				$donneePost = $request->request->get('client');
-				$nom = $donneePost['nom'];
+				$email = $donneePost['email'];
 				$mdp = $donneePost['password'];
 				
 				// Controle du nom et du mdp
 				$manager = $this->getDoctrine()->getManager();
 				$rep = $manager->getRepository('FormArmorBundle:Client');
-				$nbClient = $rep->verifMDP($nom, $mdp);
-				$admin =$rep->verifAdmin($nom, $mdp)['admin'];
+				$nbClient = $rep->verifMDP($email, $mdp);
+				$admin =$rep->verifAdmin($email, $mdp)['admin'];
 				if ($nbClient > 0 && ($admin ==true))
 				{
-					$utilisateur = $rep->findByLogin($nom, $mdp);
+					$utilisateur = $rep->findByLogin($email, $mdp);
 					$session = new Session();
 					$session->set('utilisateur', $utilisateur);
 					return $this->render('FormArmorBundle:Admin:accueil.html.twig');
 				}
 				else if ($nbClient > 0 && ($admin ==false)) 		
 				{		
-					$utilisateur = $rep->findByLogin($nom, $mdp);
+					$utilisateur = $rep->findByLogin($email, $mdp);
 					$session = new Session();
 					$session->set('utilisateur', $utilisateur);
 					return $this->render('FormArmorBundle:Client:accueil.html.twig');
@@ -83,45 +83,59 @@ class ClientController extends Controller
 		{
 			throw $this->createNotFoundException("La page ".$page." n'existe pas.");
 		}
-
-		// On peut fixer le nombre de lignes avec la ligne suivante :
-		// $nbParPage = 4;
-		// Mais bien sûr il est préférable de définir un paramètre dans "app\config\parameters.yml", et d'y accéder comme ceci :
 		$nbParPage = $this->container->getParameter('nb_par_page');
 		
 		// On récupère l'objet Paginator
 		$manager = $this->getDoctrine()->getManager();
-		$rep = $manager->getRepository('FormArmorBundle:Sessions_Autorisees');
-		
-		$lesSessions = $rep->listeSessionsClient($page, $nbParPage,$idClient);
+		$rep = $manager->getRepository('FormArmorBundle:Sessions_Autorisees');		
+		$lesSessionsAutorisees = $rep->listeSessionsClient($idClient);
 
-		// On calcule le nombre total de pages grâce au count($lesSessions) qui retourne le nombre total de sessions
+		$rep = $manager->getRepository('FormArmorBundle:Session_formation');
+		$lesSessions = $rep->listeSessionsClient($page, $nbParPage);
+
 		$nbPages = ceil(count($lesSessions) / $nbParPage);
 		
-		// Si la page n'existe pas, on retourne une erreur 404
 		if ($page > $nbPages)
 		{
 			return $this->render('FormArmorBundle:Client:session.html.twig',array(
+			'lesSessionsAutorisees' => null,
 			'lesSessions' => null,
 			'nbPages' => 1,
 			'page' => 1));
-			//throw $this->createNotFoundException("La page ".$page." n'existe pas.");
 		}
 		
-		// On donne toutes les informations nécessaires à la vue
 		return $this->render('FormArmorBundle:Client:session.html.twig', array(
-		  'lesSessions' => $lesSessions,
-		  'nbPages'     => $nbPages,
-		  'page'        => $page,
+			'lesSessions' => $lesSessions,
+			'lesSessionsAutorisees' => $lesSessionsAutorisees,
+			'nbPages'     => $nbPages,
+			'page'        => $page
 		));
 	}
 	public function inscriptionSessionAction($id, Request $request)
-    {
+  {
 		$session = $request->getSession();
 		$client = $session->get('utilisateur');
 		$idClient = $client->getId();
 
-		// Récupération de la formation d'identifiant $id
+		if($client->getEmail() == null && $client->getEmail() == "")
+		{
+			$request->getSession()->getFlashBag()->add('inscription', 'Inscription impossible avez-vous renseigné votre adresse email ?');
+			$nbParPage = $this->container->getParameter('nb_par_page');
+			$manager = $this->getDoctrine()->getManager();
+			$rep = $manager->getRepository('FormArmorBundle:Session_formation');		
+			$lesSessions = $rep->listeSessionsClient(1, $nbParPage,$idClient);
+			$rep = $manager->getRepository('FormArmorBundle:Sessions_Autorisees');		
+			$lesSessionsAutorisees = $rep->listeSessionsClient($idClient);
+			$nbPages = ceil(count($lesSessions) / $nbParPage);
+			return $this->render('FormArmorBundle:Client:session.html.twig', array(
+				'lesSessions' => $lesSessions,
+				'lesSessionsAutorisees' => $lesSessionsAutorisees,
+				'nbPages'     => $nbPages,
+				'page'        => 1,
+			));
+		}
+		
+		//Récupération de la formation d'identifiant $id
 		$em = $this->getDoctrine()->getManager();
 		$rep = $em->getRepository('FormArmorBundle:Sessions_Autorisees');
 		$sessionAutorisee = $rep->findBySession($id);
@@ -136,12 +150,13 @@ class ClientController extends Controller
 		$inscription = new Inscription();
 		$date = new \DateTime("NOW");
 		$inscription->setDateInscription($date);
-		$inscription->setClient($client);
-		$inscription->setSessionFormation($sessionFormation);	
-		$form   = $this->get('form.factory')->create(InscriptionType::class, $inscription);
+		$inscription->setClient($client);	
+		$inscription->setPresence(0);	
+		$inscription->setSessionFormation($sessionFormation);
+		$form = $this->get('form.factory')->create(InscriptionType::class, $inscription);
 		// Contrôle du mdp si method POST ou affichage du formulaire dans le cas contraire
 		if ($request->getMethod() == 'POST')
-		{
+		{			
 			$form->handleRequest($request); // permet de récupérer les valeurs des champs dans les inputs du formulaire.
 			if ($form->isValid())
 			{
@@ -159,9 +174,11 @@ class ClientController extends Controller
 					// Réaffichage de la liste des sessions
 					$nbParPage = $this->container->getParameter('nb_par_page');
 					// On récupère l'objet Paginator
-					$rep = $em->getRepository('FormArmorBundle:Sessions_Autorisees');
+					$rep = $em->getRepository('FormArmorBundle:Session_formation');
 					$lesSessions = $rep->listeSessionsClient(1, $nbParPage,$idClient);
-					
+					$rep = $em->getRepository('FormArmorBundle:Sessions_Autorisees');		
+					$lesSessionsAutorisees = $rep->listeSessionsClient($idClient);
+
 					// On calcule le nombre total de pages grâce au count($lesSessions) qui retourne le nombre total de sessions
 					$nbPages = ceil(count($lesSessions) / $nbParPage);
 						
@@ -169,12 +186,14 @@ class ClientController extends Controller
 					{
 						return $this->render('FormArmorBundle:Client:session.html.twig',array(
 						'lesSessions' => null,
+						'lesSessionsAutorisees' => null,
 						'nbPages' => 1,
 						'page' => 1));
 					}
 					// On donne toutes les informations nécessaires à la vue
 					return $this->render('FormArmorBundle:Client:session.html.twig', array(
 					'lesSessions' => $lesSessions,
+					'lesSessionsAutorisees' => $lesSessionsAutorisees,
 					'nbPages'     => $nbPages,
 					'page'        => 1,
 					));	
@@ -183,10 +202,8 @@ class ClientController extends Controller
 				{
 					$request->getSession()->getFlashBag()->add('info','Inscription déjà existante');
 				}
-				
-			}
-			
-		}		
+			}	
+		}
 		// Si formulaire pas encore soumis ou pas valide (affichage du formulaire)
 		return $this->render('FormArmorBundle:Client:inscriptionSession.html.twig', array('form' => $form->createView()));
     }
@@ -201,19 +218,14 @@ class ClientController extends Controller
 		{
 			throw $this->createNotFoundException("La page ".$page." n'existe pas.");
 		}
-
-		// On peut fixer le nombre de lignes avec la ligne suivante :
-		// $nbParPage = 4;
-		// Mais bien sûr il est préférable de définir un paramètre dans "app\config\parameters.yml", et d'y accéder comme ceci :
+		
 		$nbParPage = $this->container->getParameter('nb_par_page');
 		
-		// On récupère l'objet Paginator
 		$manager = $this->getDoctrine()->getManager();
 		$rep = $manager->getRepository('FormArmorBundle:Inscription');
 		
 		$lesSessions = $rep->listeHistorique($page, $nbParPage,$client);
 		
-		// On calcule le nombre total de pages grâce au count($lesSessions) qui retourne le nombre total de sessions
 		$nbPages = ceil(count($lesSessions) / $nbParPage);
 		
 		if ($page > $nbPages)

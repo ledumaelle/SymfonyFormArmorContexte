@@ -20,28 +20,12 @@ class Sessions_AutoriseesRepository extends \Doctrine\ORM\EntityRepository
 		$qb->andWhere('c.session = :pIdSession')->setParameter('pIdSession',   $pIdSession);
 		return $qb->getQuery()->setMaxResults(1)->getOneOrNullResult();
 	}
-    public function listeSessionsClient($page, $nbParPage,$pIdClient) // Liste toutes les sessions avec pagination
+    public function listeSessionsClient($pIdClient) // Liste toutes les sessions avec pagination
 	{       
 		$this->getEntityManager()->getConnection()->query("call SessionsAutorisees($pIdClient)");
 
         $queryBuilder = $this->createQueryBuilder('s');  
-		// On n'ajoute pas de critère ou tri particulier ici car on veut tous les statuts, la construction
-		// de notre requête est donc finie
-
-		// On récupère la Query à partir du QueryBuilder
 		$query = $queryBuilder->getQuery();
-
-		// On gère ensuite la pagination grace au service Paginator qui nous fournit
-		// entre autres les méthodes setFirstResult et setMaxResults
-		$query
-		  // On définit la formation à partir de laquelle commencer la liste
-		  ->setFirstResult(($page-1) * $nbParPage)
-		  // Ainsi que le nombre de formations à afficher sur une page
-		  ->setMaxResults($nbParPage)
-		;
-
-		// Enfin, on retourne l'objet Paginator correspondant à la requête construite
-		// (=>Ne pas oublier le "use Doctrine\ORM\Tools\Pagination\Paginator;" correspondant en début de fichier)
-		return new Paginator($query, true);
+		return $query->getResult();
 	}
 }

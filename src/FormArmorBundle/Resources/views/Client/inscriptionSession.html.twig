@@ -8,23 +8,7 @@
 
 	  {# Les erreurs g�n�rales du formulaire. #}
 	  {{ form_errors(form) }}
-
-	  {# G�n�ration du controle de fa�on d�taill�e pour l'exemple #}
-		  {# G�n�ration du label. #}
-		  {{ form_label(form.dateInscription, "Date d'inscription : ", {'label_attr': {'class': 'form-label'}}) }}
-		  {# Affichage des erreurs pour ce champ pr�cis. #}
-		  {{ form_errors(form.dateInscription) }}
-		  {# G�n�ration de l'input. #}
-		  {{ form_widget(form.dateInscription, {'attr': {'class': 'form-control'}}) }}
-	  
-	  {# G�n�ration du controle de fa�on d�taill�e pour l'exemple #}
-		  {# G�n�ration du label. #}
-		  {{ form_label(form.client, "Client : ", {'label_attr': {'class': 'form-label'}}) }}
-		  {# Affichage des erreurs pour ce champ pr�cis. #}
-		  {{ form_errors(form.client) }}
-		  {# G�n�ration de l'input. #}
-		  {{ form_widget(form.client, {'attr': {'class': 'form-control'}}) }}
-
+	 	
 		{# G�n�ration du controle de fa�on d�taill�e pour l'exemple #}
 		{# G�n�ration du label. #}
 		{{ form_label(form.sessionFormation, "Formation : ", {'label_attr': {'class': 'form-label'}}) }}
@@ -32,6 +16,15 @@
 		{{ form_errors(form.sessionFormation) }}
 		{# G�n�ration de l'input. #}
 		{{ form_widget(form.sessionFormation, {'attr': {'class': 'form-control'}}) }}
+
+		{# G�n�ration du controle de fa�on d�taill�e pour l'exemple #}
+		{# G�n�ration du label. #}
+		{{ form_label(form.dateInscription, "Date d'inscription : ", {'label_attr': {'class': 'form-label'}}) }}
+		{# Affichage des erreurs pour ce champ pr�cis. #}
+		{{ form_errors(form.dateInscription) }}
+		{# G�n�ration de l'input. #}
+		{{ form_widget(form.dateInscription) }}
+
 
 	  <br/>
 	  {# Pour le bouton, pas de label ni d'erreur, on affiche juste le widget #}

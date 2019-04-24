@@ -25,11 +25,11 @@ class SessionType extends AbstractType
     {
         $builder
 			->add('formation', EntityType::class, array('class' => 'FormArmorBundle:Formation', 'choice_label' => 'affichage', 'multiple' => false))
-			->add('dateDebut', DateType::class)
+			->add('dateDebut', DateType::class, array('widget' => 'single_text','format' => 'dd/MM/yyyy','disabled'=>true))
 			->add('nbPlaces', NumberType::class)
-			->add('nbInscrits', NumberType::class)
-			->add('close', CheckboxType::class, array('required' => false))
-			->add('Valider', SubmitType::class)
+            ->add('nbInscrits', NumberType::class)
+			->add('close', CheckboxType::class, array('required' => false,'label' => 'Close'))
+            ->add('Valider', SubmitType::class)
         ;
     }
     

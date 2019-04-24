@@ -14,24 +14,24 @@ use Doctrine\ORM\Tools\Pagination\Paginator;
  */
 class ClientRepository extends \Doctrine\ORM\EntityRepository
 {
-	public function findByLogin($nom, $mdp) // Controle du nom et du mot de passe
+	public function findByLogin($email, $mdp) // Controle du nom et du mot de passe
 	{
 		$qb = $this->createQueryBuilder('c');
-		$qb->andWhere('c.nom = :nom AND c.password = :mdp')->setParameter('nom', $nom)->setParameter('mdp',   $mdp);
+		$qb->andWhere('c.email = :email AND c.password = :mdp')->setParameter('email', $email)->setParameter('mdp',   $mdp);
 		return $qb->getQuery()->setMaxResults(1)->getOneOrNullResult();
 	}
-	public function verifMDP($nom, $mdp) // Controle du nom et du mot de passe
+	public function verifMDP($email, $mdp) // Controle du nom et du mot de passe
 	{
 		$qb = $this->createQueryBuilder('c');
 		$qb->select('COUNT(c)');
-		$qb->andWhere('c.nom = :nom AND c.password = :mdp')->setParameter('nom', $nom)->setParameter('mdp',   $mdp);
+		$qb->andWhere('c.email = :email AND c.password = :mdp')->setParameter('email', $email)->setParameter('mdp',   $mdp);
 		return $qb->getQuery()->getSingleScalarResult();
 	}
-	public function verifAdmin($nom, $mdp) // Controle du nom et du mot de passe
+	public function verifAdmin($email, $mdp) // Controle du nom et du mot de passe
 	{
 		$qb = $this->createQueryBuilder('c');
 		$qb->select('c.admin');
-		$qb->andWhere('c.nom = :nom AND c.password = :mdp')->setParameter('nom', $nom)->setParameter('mdp',   $mdp);
+		$qb->andWhere('c.email = :email AND c.password = :mdp')->setParameter('email', $email)->setParameter('mdp',   $mdp);
 		return $qb->getQuery()->setMaxResults(1)->getOneOrNullResult();
 	}
 	public function listeClients($page, $nbParPage) // Liste tous les clients avec pagination

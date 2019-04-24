@@ -1,7 +1,36 @@
 {% extends "FormArmorBundle::admin_layout.html.twig" %}
 {% block FormArmor_body %}
-	<h3>Formulaire de {{ action }} de la session de formation</h3>
-
+	<h3>Formulaire de {{ action }} de la session de formation</h3></br>
+    <h4>Liste des participants : </h4>
+	<table class="table">
+		<thead>
+		<tr>
+			<th>Matricule</th>
+			<th>Nom</th>
+			<th>Statut</th>
+			<th>Ville</th>
+		</tr>
+		</thead>
+		<tbody>		
+			{% set total = 0 %}
+            {% for inscription in lesInscriptions %}
+			{% set total = total + (inscription.client.statut.tauxHoraire * UneSession.formation.duree) |number_format %}
+			 	<tr {# si le nombre de passages dans la boucle est pair #} {% if loop.index is even %} class="success" {% else %} class="info" {% endif %}>
+					<td>{{inscription.client.id}}</td>
+					<td>{{inscription.client.nom}}</td>
+					<td>{{inscription.client.statut.type}}</td>
+					<td>{{inscription.client.ville}}</td>	
+				</tr>		
+			{% endfor %}
+        </tbody>
+        </table>
+		{% set marge = total - (UneSession.formation.Coutrevient * UneSession.formation.duree) %}
+		{% if (marge > 0) %}
+			<br/><h4 style="display:inline"> Marge : </h4><p class="text-success" style="display:inline"> +{{marge}} €</p><br/><br/>
+		{% else %}
+			<br/><h4 style="display:inline"> Marge : </h4><p class="text-danger" style="display:inline"> {{marge}} €</p><br/><br/>
+		{% endif %}
+		
 	<div class="well">
 	  {{ form_start(form, {'attr': {'class': 'form-horizontal'}}) }}
 
@@ -14,35 +43,29 @@
 		  {# Affichage des erreurs pour ce champ pr�cis. #}
 		  {{ form_errors(form.formation) }}
 		  {# G�n�ration de l'input. #}
-		  {{ form_widget(form.formation, {'attr': {'class': 'form-control'}}) }}
+		  {{ form_widget(form.formation, {'attr': {'class': 'form-control','readonly': 'readonly'}}) }}
 	  {# G�n�ration du controle de fa�on d�taill�e pour l'exemple #}
 		  {# G�n�ration du label. #}
 		  {{ form_label(form.dateDebut, "Date debut : ", {'label_attr': {'class': 'form-label'}}) }}
 		  {# Affichage des erreurs pour ce champ pr�cis. #}
 		  {{ form_errors(form.dateDebut) }}
 		  {# G�n�ration de l'input. #}
-		  {{ form_widget(form.dateDebut, {'attr': {'class': 'form-control'}}) }}
+		  {{ form_widget(form.dateDebut, {'attr': {'class': 'form-control','readonly': 'readonly'}}) }}
 	  {# G�n�ration du controle de fa�on d�taill�e pour l'exemple #}
 		  {# G�n�ration du label. #}
 		  {{ form_label(form.nbPlaces, "Nombre de places : ", {'label_attr': {'class': 'form-label'}}) }}
 		  {# Affichage des erreurs pour ce champ pr�cis. #}
 		  {{ form_errors(form.nbPlaces) }}
 		  {# G�n�ration de l'input. #}
-		  {{ form_widget(form.nbPlaces, {'attr': {'class': 'form-control'}}) }}
+		  {{ form_widget(form.nbPlaces, {'attr': {'class': 'form-control','readonly': 'readonly'}}) }}
 	  {# G�n�ration du controle de fa�on d�taill�e pour l'exemple #}
 		  {# G�n�ration du label. #}
 		  {{ form_label(form.nbInscrits, "Nombre d'inscrits : ", {'label_attr': {'class': 'form-label'}}) }}
 		  {# Affichage des erreurs pour ce champ pr�cis. #}
 		  {{ form_errors(form.nbInscrits) }}
 		  {# G�n�ration de l'input. #}
-		  {{ form_widget(form.nbInscrits, {'attr': {'class': 'form-control'}}) }}
-	  {# G�n�ration du controle de fa�on d�taill�e pour l'exemple #}
-		  {# G�n�ration du label. #}
-		  {{ form_label(form.close, "Close : ", {'label_attr': {'class': 'form-label'}}) }}
-		  {# Affichage des erreurs pour ce champ pr�cis. #}
-		  {{ form_errors(form.close) }}
-		  {# G�n�ration de l'input. #}
-		  {{ form_widget(form.close, {'attr': {'class': 'form-control'}}) }}
+		  {{ form_widget(form.nbInscrits, {'attr': {'class': 'form-control','readonly': 'readonly'}}) }}
+	 	{{ form_row(form.close) }}
 	  <br/>
 	  {# Pour le bouton, pas de label ni d'erreur, on affiche juste le widget #}
 	  {{ form_widget(form.Valider, {'attr': {'class': 'btn btn-danger'}}) }}

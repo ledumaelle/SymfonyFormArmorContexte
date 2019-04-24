@@ -40,6 +40,13 @@ class Inscription
      */
     private $dateInscription;
 
+     /**
+     * @var int
+     *
+     * @ORM\Column(name="presence", type="boolean")
+     */
+    private $presence;
+
 
     /**
      * Get id
@@ -121,5 +128,29 @@ class Inscription
     public function getSessionFormation()
     {
         return $this->sessionFormation;
+    }
+
+    /**
+     * Get presence
+     *
+     * @return int
+     */
+    public function getPresence()
+    {
+        return $this->presence;
+    }
+
+    /**
+     * Set presence
+     *
+     * @param integer $presence
+     * 
+     * @return Inscription
+     */
+    public function setPresence($presence)
+    {
+        $this->presence = $presence;
+
+        return $this;
     }
 }

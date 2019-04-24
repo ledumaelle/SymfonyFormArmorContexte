@@ -19,6 +19,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
 
+
 class AdminController extends Controller
 {
     	
@@ -390,7 +391,7 @@ class AdminController extends Controller
 		
 		// On calcule le nombre total de pages grâce au count($lesSessions) qui retourne le nombre total de sessions
 		$nbPages = ceil(count($lesSessions) / $nbParPage);
-		
+
 		// Si la page n'existe pas, on retourne une erreur 404
 		if ($page > $nbPages)
 		{
@@ -410,7 +411,7 @@ class AdminController extends Controller
 		$em = $this->getDoctrine()->getManager();
 		$rep = $em->getRepository('FormArmorBundle:Session_formation');
 		$session = $rep->find($id);
-		
+
 		// Création du formulaire à partir de la session "récupérée"
 		$form   = $this->get('form.factory')->create(SessionType::class, $session);
 		
@@ -423,6 +424,47 @@ class AdminController extends Controller
 				// mise à jour de la bdd
 				$em->persist($session);
 				$em->flush();
+				
+				if($session->getClose() == 1){
+					$transport = (new \Swift_SmtpTransport($this->container->getParameter('mailer_host'), $this->container->getParameter('mailer_port'), $this->container->getParameter('mailer_encryption')))
+					->setUsername($this->container->getParameter('mailer_user'))
+					->setPassword($this->container->getPArameter('mailer_password'));
+				
+					$manager = $this->getDoctrine()->getManager();
+					$repInscription = $manager->getRepository('FormArmorBundle:Inscription');
+			
+					$imageEntete = \Swift_Image::fromPath('../web/images/banniere.jpg');
+					$imageCarte = \Swift_Image::fromPath('../web/images/carte_Formarmor.jpg');
+					$imageValise = \Swift_Image::fromPath('../web/images/valise.jpg');
+					if($session->getFormation()->getTypeForm() == "Compta"){
+						$imageType = \Swift_Image::fromPath('../web/images/compta.jpg');
+					}else{
+						$imageType = \Swift_Image::fromPath('../web/images/bur.jpg');
+					}
+					if($session->getFormation()->getDiplomante() == 1){
+						$imageDipl = \Swift_Image::fromPath('../web/images/dipl.jpg');
+					}else{
+						$imageDipl = \Swift_Image::fromPath('../web/images/nonDipl.jpg');
+					}
+					$imageCalendrier = \Swift_Image::fromPath('../web/images/calendrier.jpg');
+					$imageDuree = \Swift_Image::fromPath('../web/images/duree.jpg');
+
+					$mailer = new \Swift_Mailer($transport);
+					$message = \Swift_Message::newInstance()
+							->setSubject('FormArmor')
+							->setFrom(array('FormArmor@gmail.com' => 'FormArmor'))
+							->setTo($repInscription->retournerMailInscription($id));
+
+					$message->setBody(
+						$this->renderView(
+								'FormArmorBundle:Admin:validationInscription.html.twig',
+								array('message' => 'L\'équipe FormArmor vous confirme votre inscription à la session suivante', 'annuler' => 0, 'imageEntete' => $message->embed($imageEntete), 'imageCarte' => $message->embed($imageCarte), 'imageValise' => $message->embed($imageValise), 'imageType' => $message->embed($imageType), 'imageDipl' => $message->embed($imageDipl), 'imageCalendrier' => $message->embed($imageCalendrier), 'imageDuree' => $message->embed($imageDuree), 'session' => $session)
+						),
+					'text/html'
+					);
+
+					$mailer->send($message);
+				}
 				
 				// Réaffichage de la liste des sessions
 				$nbParPage = $this->container->getParameter('nb_par_page');
@@ -483,8 +525,79 @@ class AdminController extends Controller
 		}
 		// Si formulaire pas encore soumis ou pas valide (affichage du formulaire)
 		return $this->render('FormArmorBundle:Admin:formSession.html.twig', array('form' => $form->createView(), 'action' => 'SUPPRESSION'));
-    }
-	
+	}
+	public function validerSessionAction($id, Request $request) // Affichage du formulaire de validation d'une session
+    {
+		// Récupération de la session d'identifiant $id
+		$em = $this->getDoctrine()->getManager();
+		$rep = $em->getRepository('FormArmorBundle:Session_formation');
+		$session = $rep->find($id);
+
+		$rep = $em->getRepository('FormArmorBundle:Inscription');
+		$lesInscriptions = $rep->listeInscriptions($session);
+
+		// Création du formulaire à partir de la session "récupérée"
+		$form   = $this->get('form.factory')->create(SessionType::class, $session);
+		
+		// Mise à jour de la bdd si method POST ou affichage du formulaire dans le cas contraire
+		if ($request->getMethod() == 'POST')
+		{
+			$form->handleRequest($request); // permet de récupérer les valeurs des champs dans les inputs du formulaire.
+			if ($form->isValid())
+			{
+				$transport = (new \Swift_SmtpTransport($this->container->getParameter('mailer_host'), $this->container->getParameter('mailer_port'),$this->container->getParameter('mailer_encryption')))
+				->setUsername($this->container->getParameter('mailer_user'))
+				->setPassword($this->container->getParameter('mailer_password'));
+
+				$mailer = new \Swift_Mailer($transport);
+				$desti = array();
+				$i=0;
+				foreach ($lesInscriptions as $inscription)
+				{
+					$desti[$i] = $inscription->getClient()->getEmail();
+					$i++;
+				}
+
+				//Envoie d'un email  à tous les clients inscrits
+				$message =  \Swift_Message::newInstance()
+				->setSubject('Hello Email')
+				->setFrom(['FormArmor@gmail.com' => 'FormArmor'])
+				->setTo($desti)
+				->setBody(
+					$this->renderView(
+						'FormArmorBundle:Client:validationSession.html.twig',
+						['name' => $inscription->getClient()->getNom(), 'session' => $session]
+					),
+					'text/html'
+				);
+
+				$mailer->send($message);
+				
+				$session->setClose(1);
+				// mise à jour de la bdd
+				$em->persist($session);
+				$em->flush();
+					
+				// Réaffichage de la liste des formations
+				$nbParPage = $this->container->getParameter('nb_par_page');
+				// On récupère l'objet Paginator
+				$rep = $em->getRepository('FormArmorBundle:Session_formation');
+				$lesSessions = $rep->listeSessions(1, $nbParPage);
+					
+				// On calcule le nombre total de pages grâce au count($lesSessions) qui retourne le nombre total de sessions
+				$nbPages = ceil(count($lesSessions) / $nbParPage);
+					
+				// On donne toutes les informations nécessaires à la vue
+				return $this->render('FormArmorBundle:Admin:session.html.twig', array(
+					'lesSessions' => $lesSessions,
+					'nbPages'     => $nbPages,
+					'page'        => 1,
+					));
+			}
+		}
+		// Si formulaire pas encore soumis ou pas valide (affichage du formulaire)
+		return $this->render('FormArmorBundle:Admin:formSessionValidation.html.twig', array('form' => $form->createView(), 'action' => 'VALIDATION', 'UneSession' => $session, 'lesInscriptions' => $lesInscriptions));
+	}	
 	// Gestion des plans de formation
 	public function listePlanFormationAction($page)
 	{
@@ -537,7 +650,7 @@ class AdminController extends Controller
 			{
 				// mise à jour de la bdd
 				$em->persist($plan);
-				$em->flush();
+				$em->flush();				
 				
 				// Réaffichage de la liste des sessions
 				$nbParPage = $this->container->getParameter('nb_par_page');
@@ -595,5 +708,191 @@ class AdminController extends Controller
 		}
 		// Si formulaire pas encore soumis ou pas valide (affichage du formulaire)
 		return $this->render('FormArmorBundle:Admin:formPlan.html.twig', array('form' => $form->createView(), 'action' => 'SUPPRESSION'));
-    }
+		}
+		
+		
+		//ANGELIQUE §§§§§§ 
+		
+
+		public function inscriptionsProvisoiresAction($id)
+		{
+		// On récupère l'objet Paginator
+		$manager = $this->getDoctrine()->getManager();
+		$repInscription = $manager->getRepository('FormArmorBundle:Inscription');
+		$lesInscriptions = $repInscription->retournerInscription($id);
+
+		$repSession = $manager->getRepository('FormArmorBundle:Session_formation');
+		$session = $repSession->find($id);
+		$nbHeures = $session->getFormation()->getDuree(); 
+		$sommeTauxHoraire = 0;
+		foreach($lesInscriptions as $inscription)
+		{
+			$sommeTauxHoraire += $inscription->getClient()->getStatut()->getTauxHoraire() * $nbHeures;
+		}
+		$marge = $sommeTauxHoraire - $session->getFormation()->getCoutrevient()  * $nbHeures ;
+		
+		// On donne toutes les informations nécessaires à la vue
+		return $this->render('FormArmorBundle:Admin:inscriptions.html.twig', array(
+		  'lesInscriptions' => $lesInscriptions,
+		  'marge' => $marge,
+		  'formation' => $session->getFormation(),
+			'sessionId' => $id,
+			'session' => $session
+		));
+	}
+
+	public function validationInscriptionsAction($id)
+	{
+		$transport = (new \Swift_SmtpTransport($this->container->getParameter('mailer_host'), $this->container->getParameter('mailer_port'), $this->container->getParameter('mailer_encryption')))
+		->setUsername($this->container->getParameter('mailer_user'))
+		->setPassword($this->container->getPArameter('mailer_password'));
+	
+		$manager = $this->getDoctrine()->getManager();
+		$repInscription = $manager->getRepository('FormArmorBundle:Inscription');
+
+		$repSession =  $manager->getRepository('FormArmorBundle:Session_formation');
+
+		$session = $repSession->find($id);
+
+		$imageEntete = \Swift_Image::fromPath('../web/images/banniere.jpg');
+		$imageCarte = \Swift_Image::fromPath('../web/images/carte_Formarmor.jpg');
+		$imageValise = \Swift_Image::fromPath('../web/images/valise.jpg');
+		if($session->getFormation()->getTypeForm() == "Compta"){
+			$imageType = \Swift_Image::fromPath('../web/images/compta.jpg');
+		}else{
+			$imageType = \Swift_Image::fromPath('../web/images/bur.jpg');
+		}
+		if($session->getFormation()->getDiplomante() == 1){
+			$imageDipl = \Swift_Image::fromPath('../web/images/dipl.jpg');
+		}else{
+			$imageDipl = \Swift_Image::fromPath('../web/images/nonDipl.jpg');
+		}
+		$imageCalendrier = \Swift_Image::fromPath('../web/images/calendrier.jpg');
+		$imageDuree = \Swift_Image::fromPath('../web/images/duree.jpg');
+
+		$mailer = new \Swift_Mailer($transport);
+		$message = \Swift_Message::newInstance()
+        ->setSubject('FormArmor')
+        ->setFrom(array('FormArmor@gmail.com' => 'FormArmor'))
+        ->setTo($repInscription->retournerMailInscription($id));
+
+		$message->setBody(
+			$this->renderView(
+					'FormArmorBundle:Admin:validationInscription.html.twig',
+					array('message' => 'L\'équipe FormArmor vous confirme votre inscription à la session suivante', 'annuler' => 0, 'imageEntete' => $message->embed($imageEntete), 'imageCarte' => $message->embed($imageCarte), 'imageValise' => $message->embed($imageValise), 'imageType' => $message->embed($imageType), 'imageDipl' => $message->embed($imageDipl), 'imageCalendrier' => $message->embed($imageCalendrier), 'imageDuree' => $message->embed($imageDuree), 'session' => $session)
+			),
+		 'text/html'
+		);
+
+		$mailer->send($message);
+
+		$manager = $this->getDoctrine()->getManager();
+		$repSession = $manager->getRepository('FormArmorBundle:Session_formation');
+		$session = $repSession->find($id);
+		$session->setClose(1);
+		$manager->persist($session);
+		$manager->flush();
+
+		return $this->listeSessionAction(1);
+	}
+
+	public function suppressionInscriptionsAction($id, Request $request)
+	{
+		$motifAnnulation = $request->get('motifAnnulation');
+
+		$transport = (new \Swift_SmtpTransport($this->container->getParameter('mailer_host'), $this->container->getParameter('mailer_port'), $this->container->getParameter('mailer_encryption')))
+		->setUsername($this->container->getParameter('mailer_user'))
+		->setPassword($this->container->getPArameter('mailer_password'));
+	
+		$manager = $this->getDoctrine()->getManager();
+		$repInscription = $manager->getRepository('FormArmorBundle:Inscription');
+
+		$repSession =  $manager->getRepository('FormArmorBundle:Session_formation');
+
+		$session = $repSession->find($id);
+
+		$imageEntete = \Swift_Image::fromPath('../web/images/banniere.jpg');
+		$imageCarte = \Swift_Image::fromPath('../web/images/carte_Formarmor.jpg');
+		$imageValise = \Swift_Image::fromPath('../web/images/valise.jpg');
+		if($session->getFormation()->getTypeForm() == "Compta"){
+			$imageType = \Swift_Image::fromPath('../web/images/compta.jpg');
+		}else{
+			$imageType = \Swift_Image::fromPath('../web/images/bur.jpg');
+		}
+		if($session->getFormation()->getDiplomante() == 1){
+			$imageDipl = \Swift_Image::fromPath('../web/images/dipl.jpg');
+		}else{
+			$imageDipl = \Swift_Image::fromPath('../web/images/nonDipl.jpg');
+		}
+		$imageCalendrier = \Swift_Image::fromPath('../web/images/calendrier.jpg');
+		$imageDuree = \Swift_Image::fromPath('../web/images/duree.jpg');
+
+		$mailer = new \Swift_Mailer($transport);
+		$message = \Swift_Message::newInstance()
+        ->setSubject('FormArmor')
+        ->setFrom(array('FormArmor@gmail.com' => 'FormArmor'))
+        ->setTo($repInscription->retournerMailInscription($id));
+
+		$message->setBody(
+			$this->renderView(
+					'FormArmorBundle:Admin:validationInscription.html.twig',
+					array('message' => $motifAnnulation, 'annuler' => 0, 'imageEntete' => $message->embed($imageEntete), 'imageCarte' => $message->embed($imageCarte), 'imageValise' => $message->embed($imageValise), 'imageType' => $message->embed($imageType), 'imageDipl' => $message->embed($imageDipl), 'imageCalendrier' => $message->embed($imageCalendrier), 'imageDuree' => $message->embed($imageDuree), 'session' => $session)
+			),
+		 'text/html'
+		);
+
+		$mailer->send($message);
+
+		$emInscription = $this->getDoctrine()->getManager();
+		$repInscription = $emInscription->getRepository('FormArmorBundle:Inscription');
+		$lesInscriptions = $repInscription->retournerInscriptions();
+		foreach($lesInscriptions as $uneInscription){
+			if($uneInscription->getSessionFormation()->getId() == $id){
+				$repInscription = $repInscription->suppInscription($uneInscription->getId());
+				$emInscription->persist($uneInscription);
+				$emInscription->flush();
+			}			
+		}
+		$emSession = $this->getDoctrine()->getManager();
+		$repSession = $emSession->getRepository('FormArmorBundle:Session_formation');
+		$repSession = $repSession->suppSession($id);
+		$emSession->flush();
+
+		return $this->listeSessionAction(1);
+	}
+
+	public function infoClientAction($idClient, $idFormation){
+		$emClient = $this->getDoctrine()->getManager();
+		$repClient = $emClient->getRepository('FormArmorBundle:Client');
+		$client = $repClient->find($idClient);
+
+		$emFormation = $this->getDoctrine()->getManager();
+		$repFormation = $emFormation->getRepository('FormArmorBundle:Formation');
+		$formation = $repFormation->find($idFormation);
+	
+		$emInscription = $this->getDoctrine()->getManager();
+		$repInscription = $emInscription->getRepository('FormArmorBundle:Inscription');
+		$inscription = $repInscription->retourneNbHClient($idClient);
+
+		if($formation->getTypeForm() == 'Compta'){
+			$totCompta = $formation->getDuree() + $inscription[0];
+			$totBureau = $inscription[1];
+		}else{
+			$totCompta = $inscription[0];
+			$totBureau = $formation->getDuree() + $inscription[1];
+		}
+
+		if($totCompta > $client->getNbhcpta()){
+			$colorCompta = 'red';
+		}else{
+			$colorCompta = 'green';
+		}
+	
+		if($totBureau > $client->getNbhbur()){
+			$colorBureau = 'red';
+		}else{
+			$colorBureau = 'green';
+		}
+		return new Response($client->getNom().'/'.$client->getNbhcpta().'/'.$client->getNbhbur().'/'.$formation->getTypeForm().'/'.$formation->getDuree().'/'.$totCompta.'/'.$totBureau.'/'.$colorCompta.'/'.$colorBureau);
+	}
 }

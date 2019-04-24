@@ -7,29 +7,35 @@
 			<th>Formation</th>
 			<th>Niveau</th>
 			<th>Description</th>
-			<th>Date debut</th>
+			<th>Date</th>
 			<th>Nombre de places</th>
 			<th>Nombre d'inscrits</th>
 			<th>Fermé</th>
-			<th colspan="2">Option</th>
+			<th>Option</th>
 		</tr>
 		</thead>
 		<tbody>
-			{% for session in lesSessions %}
+			{% for session in lesSessions %}										
 				<tr {# si le nombre de passages dans la boucle est pair #} {% if loop.index is even %} class="success" {% else %} class="info" {% endif %}>
-					<td>{{session.libelle}}</td>
-					<td>{{session.niveau}}</td>
-					<td>{{session.description}}</td>
-					<td>{{session.date|date('d-m-Y')}}</td>
+					<td>{{session.formation.libelle}}</td>
+					<td>{{session.formation.niveau}}</td>
+					<td>{{session.formation.description}}</td>
+					<td>{{session.dateDebut|date('d-m-Y')}}</td>
 					<td>{{session.nbPlaces}}</td>
 					<td>{{session.nbInscrits}}</td>
-					{% if (session.ferme == 1) %}
+					{% if (session.close == 1) %}
 						<td>Oui</td>
 					{% else %}
 						<td>Non</td>
 					{% endif %}
-					<td><a href="{{ path('form_armor_client_session_inscription', {'id': session.session.id}) }}" class="btn btn-primary" role="button">S'Inscrire</a></td>
-				</tr>
+					{% if not lesSessionsAutorisees == null %}	
+						{% for sessionAutorisee in lesSessionsAutorisees %}	
+							{% if sessionAutorisee.session.id == session.id %}
+								<td><a href="{{ path('form_armor_client_session_inscription', {'id': session.id}) }}" class="btn btn-primary" role="button">S'Inscrire</a></td>
+							{% endif %}
+						{% endfor %}
+					{% endif %}
+				</tr>				
 			{% endfor %}
 		</tbody>
 	</table>
@@ -42,7 +48,12 @@
 			</li>
 		{% endfor %}
 	</ul>
-	
+	{# Affichage des messages �ventuels. Par exemple apr�s une insertion via un formulaire #}
+	{% for flash_message in app.session.flashBag.get('inscription') %}
+		<div class="flash-notice">
+			<script>alert('{{ flash_message }}');</script>
+		</div>
+	{% endfor %}
 	<script>
 		$(function() {
 			$('#menu1').attr('class', 'active');

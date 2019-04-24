@@ -1,6 +1,6 @@
 {% extends "FormArmorBundle::client_layout.html.twig" %}
 {% block FormArmor_body %}
 	{% if app.session is not null and app.session.started %}
-		<h1> Bienvenue {{ app.session.get('utilisateur').nom }} </h1> 		
+		<h1> Bienvenue {{ app.session.get('utilisateur').nom }} {{ app.session.get('utilisateur').prenom }}</h1> 		
 	{% endif %}
 {% endblock %}

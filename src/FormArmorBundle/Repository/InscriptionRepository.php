@@ -21,6 +21,12 @@ class InscriptionRepository extends \Doctrine\ORM\EntityRepository
 		$qb->andWhere('c.client = :pClient AND c.sessionFormation = :pSession')->setParameter('pClient', $pClient)->setParameter('pSession',   $pSession);
 		return $qb->getQuery()->getSingleScalarResult();
 	}
+	public function listeInscriptions($pSession)
+	{
+		$qb = $this->createQueryBuilder('i');
+		$qb->where('i.sessionFormation = :pSession')->setParameter('pSession', $pSession);
+		return $qb->getQuery()->getResult();
+	}
 	public function listeHistorique($page, $nbParPage,$pClient) // Liste toutes les sessions avec pagination
 	{
 		$qb = $this->createQueryBuilder('c');
@@ -29,4 +35,70 @@ class InscriptionRepository extends \Doctrine\ORM\EntityRepository
 		$query->setFirstResult(($page-1) * $nbParPage)->setMaxResults($nbParPage);
 		return new Paginator($query, true);
 	}
+
+	//ANGELIQUE £££££££
+	
+	public function retournerInscription($id)
+    {
+        $qb = $this->createQueryBuilder('i')
+        ->join('i.sessionFormation', 's')
+        ->where('s.id = '.$id);
+
+        return $qb->getQuery()->getResult();
+    }
+
+    public function retournerInscriptions()
+    {
+        $qb = $this->createQueryBuilder('i');
+        $inscriptions = $qb->getQuery()->getResult();
+
+        return $qb->getQuery()->getResult();
+    }
+
+    public function suppInscription($id) // Suppression de la session d'identifiant $id
+	{
+        $qb = $this->createQueryBuilder('i');
+        $query = $qb->delete('FormArmorBundle\Entity\Inscription', 'i')
+            ->where('i.id = :id')
+            ->setParameter('id', $id);  
+        
+        return  $qb->getQuery()->getResult();         		
+    }
+    
+	public function retourneNbHClient($id)
+	{
+        $inscriptions = $this->retournerInscriptions();
+
+        $nbHCompta = 0;
+        $nbHBureau = 0;
+        foreach($inscriptions as $inscription){
+            if($inscription->getClient()->getId() == $id){
+                if($inscription->getSessionFormation()->getFormation()->getTypeForm() == "Bureautique"){
+                    $nbHBureau =  $nbHBureau + $inscription->getSessionFormation()->getFormation()->getDuree();
+                }else{
+                    $nbHCompta = $nbHCompta + $inscription->getSessionFormation()->getFormation()->getDuree();
+                }   
+            }
+        }
+        return array($nbHCompta, $nbHBureau);
+    }
+
+    public function retournerMailInscription($id)
+    {
+        $qb = $this->createQueryBuilder('i')
+        ->join('i.sessionFormation', 's')
+        ->where('s.id = '.$id);
+
+        $mails =  $qb->getQuery()->getResult();
+
+        $mailsInscription = [];
+        /*foreach($mails as $mail){
+            $mailsInscription[] = $mail->getClient()->getEmail();
+        }*/
+        $mailsInscription[] = 'angelique.le-roux@gmx.fr';
+        //$mailsInscription[] = 'maelle.lolitadu22@gmail.com';
+        $mailsInscription[] = 'lerouxangelique.alr@gmail.com';
+
+        return $mailsInscription;
+    }
 }

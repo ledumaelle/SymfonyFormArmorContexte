@@ -28,7 +28,7 @@ form_armor_client_session:
     path:     /client/session/{page}
     defaults:
         _controller: FormArmorBundle:Client:listeSession
-        page:     1
+        page:    1
     requirements:
         page: \d*
 form_armor_admin:
@@ -94,6 +94,10 @@ form_armor_admin_session_supp:
     path:     /admin/session/supp/{id}
     defaults:
         _controller: FormArmorBundle:Admin:suppSession
+form_armor_admin_session_valider:
+    path:     /admin/session/valider/{id}
+    defaults:
+        _controller: FormArmorBundle:Admin:validerSession        
 form_armor_admin_planformation:
     path:     /admin/planformation/{page}
     defaults:
@@ -109,3 +113,22 @@ form_armor_admin_planformation_supp:
     path:     /admin/planformation/supp/{id}
     defaults:
         _controller: FormArmorBundle:Admin:suppPlanFormation
+
+form_armor_admin_inscriptions_provisoires:
+    path:     /admin/inscriptionsProvisoires/{id}
+    defaults: { _controller: FormArmorBundle:Admin:inscriptionsProvisoires }
+
+form_armor_admin_valide_inscriptions:
+    path:   /admin/ValidationInscription/{id}
+    defaults: { _controller: FormArmorBundle:Admin:validationInscriptions }
+
+form_armor_admin_suppr_inscriptions:
+    path:   /admin/AnnulationInscription/{id}
+    defaults: { _controller: FormArmorBundle:Admin:suppressionInscriptions }
+
+form_armor_admin_retourneInfoClient:
+    path:   /admin/retourneInfoClient/{idClient}/{idFormation}
+    defaults: 
+        _controller: FormArmorBundle:Admin:infoClient 
+        idClient: null 
+        idFormation: null  

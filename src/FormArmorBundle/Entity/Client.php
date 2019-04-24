@@ -33,6 +33,13 @@ class Client
      * @ORM\Column(name="nom", type="string", length=40)
      */
     private $nom;
+
+	/**
+     * @var string
+     *
+     * @ORM\Column(name="prenom", type="string", length=40)
+     */
+    private $prenom;
 	
     /**
      * @var string
@@ -68,6 +75,13 @@ class Client
      * @ORM\Column(name="email", type="string", length=40)
      */
     private $email;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="telephone", type="string", length=40)
+     */
+    private $telephone;
 
     /**
      * @var int
@@ -198,6 +212,16 @@ class Client
     }
 
     /**
+     * Get email
+     *
+     * @return string
+     */
+    public function getEmail()
+    {
+        return $this->email;
+    }
+
+    /**
      * Set email
      *
      * @param string $email
@@ -212,14 +236,29 @@ class Client
     }
 
     /**
-     * Get email
+     * Get telephone
      *
      * @return string
      */
-    public function getEmail()
+    public function getTelephone()
     {
-        return $this->email;
+        return $this->telephone;
     }
+
+    /**
+     * Set telephone
+     *
+     * @param string $telephone
+     *
+     * @return Client
+     */
+    public function setTelephone($telephone)
+    {
+        $this->telephone = $telephone;
+
+        return $this;
+    }
+    
 
     /**
      * Set nbhcpta
@@ -315,6 +354,30 @@ class Client
     public function getNom()
     {
         return $this->nom;
+    }
+
+    /**
+     * Get prenom
+     *
+     * @param string $prenom
+     *
+     * @return Client
+     */
+    public function setPrenom($prenom)
+    {
+        $this->prenom = $prenom;
+
+        return $this;
+    }
+
+    /**
+     * Get prenom
+     *
+     * @return string
+     */
+    public function getPrenom()
+    {
+        return $this->prenom;
     }
 
     /**

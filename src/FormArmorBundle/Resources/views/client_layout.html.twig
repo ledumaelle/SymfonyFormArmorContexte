@@ -38,7 +38,7 @@
 						  <li id='menu3'><a href="{{ path('form_armor_deconnexion') }}">D&eacute;connexion</a></li>
 						</ul>						
 						<ul class="nav navbar-nav navbar-right">
-						  <li id='menu3'><a href="#">{{ app.session.get('utilisateur').nom }}</a></li>
+						  <li id='menu3'><a href="#">{{ app.session.get('utilisateur').nom }} {{ app.session.get('utilisateur').prenom}} </a></li>
 						</ul>
 					  </div>
 					</nav>

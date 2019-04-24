@@ -16,25 +16,24 @@ class Session_formationRepository extends \Doctrine\ORM\EntityRepository
 {
 	public function listeSessions($page, $nbParPage) // Liste toutes les sessions avec pagination
 	{
+		$date = new \DateTime("NOW");
 		$queryBuilder = $this->createQueryBuilder('s');
-
-		// On n'ajoute pas de critère ou tri particulier ici car on veut tous les statuts, la construction
-		// de notre requête est donc finie
-
-		// On récupère la Query à partir du QueryBuilder
+		$queryBuilder->where('s.dateDebut > :dateDuJour')->setParameter('dateDuJour', $date)->orderBy('s.dateDebut', 'asc');
 		$query = $queryBuilder->getQuery();
-
-		// On gère ensuite la pagination grace au service Paginator qui nous fournit
-		// entre autres les méthodes setFirstResult et setMaxResults
-		$query
-		  // On définit la formation à partir de laquelle commencer la liste
-		  ->setFirstResult(($page-1) * $nbParPage)
-		  // Ainsi que le nombre de formations à afficher sur une page
-		  ->setMaxResults($nbParPage)
-		;
-
-		// Enfin, on retourne l'objet Paginator correspondant à la requête construite
-		// (=>Ne pas oublier le "use Doctrine\ORM\Tools\Pagination\Paginator;" correspondant en début de fichier)
+		$query->setFirstResult(($page-1) * $nbParPage)->setMaxResults($nbParPage);
+		return new Paginator($query, true);
+	}
+	public function listeSessionsClient($page, $nbParPage) // Liste toutes les sessions disponibles au cours des 2 mois
+	{
+		$date = new \DateTime("NOW");
+		$dateMois = (new \DateTime("NOW"))->add(new \DateInterval('P2M'));
+		$queryBuilder = $this->createQueryBuilder('s');
+		$queryBuilder->where('s.dateDebut BETWEEN :date AND :date2')
+		->setParameter('date',$date->format('Y-m-d'))
+		->setParameter('date2',$dateMois->format('Y-m-d'))
+		->orderBy('s.dateDebut', 'asc');
+		$query = $queryBuilder->getQuery();
+		$query->setFirstResult(($page-1) * $nbParPage)->setMaxResults($nbParPage);
 		return new Paginator($query, true);
 	}
 	public function suppSession($id) // Suppression de la session d'identifiant $id

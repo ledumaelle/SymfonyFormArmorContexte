@@ -1,0 +1,87 @@
+{% extends "FormArmorBundle::admin_layout.html.twig" %}
+{% block FormArmor_body %}
+	<h2>DETAIL DE LA SESSION</h2>
+	<div class="row">
+		<table class="table">
+			<tbody><tr>
+				<td>
+					<i class="fa fa-briefcase"></i> {{formation.affichage}}
+				</td>
+				<td>
+					{% if formation.typeForm == "Bureautique" %}<i class="fas fa-desktop"></i>{% else %}<i class="fas fa-calculator"></i></i>{% endif %} {{formation.typeForm}}
+				</td>
+				<td>
+					{% if formation.diplomante == 1 %}<i class="far fa-check-circle"></i>{% else %}<i class="far fa-times-circle"></i>{% endif %} Diplomante
+				</td>
+				<td>
+					<i class="fas fa-calendar-alt"></i> {{session.dateDebut|date('d/m/Y')}}
+				</td>
+				<td>
+					<i class="fas fa-hourglass-half"></i> {{formation.duree}} jours
+				</td>
+				<td>
+					<i class="fa fa-users"></i> <strong><span  {% if session.nbInscrits > session.nbPlaces or session.nbInscrits < session.nbPlaces %} style="color: red" {% else %} style="color: green" {% endif %}>{{session.nbInscrits}}</span>/{{session.nbPlaces}}</strong>
+				</td>
+				<td>
+					<i class="fas fa-piggy-bank"></i> <strong><span{% if marge < 0 %} style="color: red" {% else %} style="color: green" {% endif %}> {{marge}} €</span></strong>
+				</td>
+			</tbody><tr>
+		</table>
+	</div>
+	<div class="row">
+		<table class="table">
+			<thead>
+			<tr>
+				<th>Matricule</th>
+				<th>Nom</th>
+				<th>Prénom</th>
+				<th>Statut</th>
+				<th>Adresse</th>
+				<th>Mail</th>
+				<th>Comptabilité (h)</th>
+				<th>Bureautique (h)</th>
+			</tr>
+			</thead>
+			<tbody>
+				{% for inscription in lesInscriptions %}
+					<tr {# si le nombre de passages dans la boucle est pair #} {% if loop.index is even %} class="success" {% else %} class="info" {% endif %}>
+						<td>{{inscription.client.id}}</td>
+						<td>{{inscription.client.nom}}</td>
+						<td>{{inscription.client.prenom}}</td>
+						<td>{{inscription.client.statut.type}}</td>
+						<td>{{inscription.client.adresse}} {{inscription.client.cp}} {{inscription.client.ville}}</td>
+						<td>{{inscription.client.email}}</td>
+						<td>{{inscription.client.nbhcpta}}</td>
+						<td>{{inscription.client.nbhbur}}</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+	<div class="row">
+		<a class="btn btn-info" href="{{ path('form_armor_admin_valide_inscriptions', {'id': sessionId}) }}">Valider</a>	<a class="btn btn-danger" href="" data-toggle="modal" data-target="#modalAnnulation">Annuler</a>
+	</div>
+
+	<!-- Modal -->
+	<form name="formAnnulation" action="{{ path('form_armor_admin_suppr_inscriptions', {'id': sessionId}) }}">
+		<div class="modal fade" id="modalAnnulation" role="dialog">
+			<div class="modal-dialog">
+				<!-- Modal content-->
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal">&times;</button>
+						<h4 class="modal-title">Entrez le motif d'annulation de cette session</h4>
+					</div>
+					<div class="modal-body">
+						<textarea required class='form-control' name='motifAnnulation' placeholder="Saisir le motif d'annulation" require></textarea>
+					</div>
+					<div class="modal-footer">
+						<button type="submit" class="btn btn-info">Annuler la formation</button>
+						<button type="button" class="btn btn-danger" data-dismiss="modal">Fermer</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+
+{% endblock %}

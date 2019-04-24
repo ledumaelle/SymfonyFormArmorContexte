@@ -10,7 +10,7 @@
 			<th>Nombre de places</th>
 			<th>Nombre d'inscrits</th>
 			<th>Close</th>
-			<th colspan="2">Option</th>
+			<th colspan="3">Option</th>
 		</tr>
 		</thead>
 		<tbody>
@@ -18,7 +18,7 @@
 				<tr {# si le nombre de passages dans la boucle est pair #} {% if loop.index is even %} class="success" {% else %} class="info" {% endif %}>
 					<td>{{session.id}}</td>
 					<td>{{session.formation.libelle}}-{{session.formation.niveau}}</td>
-					<td>{{session.dateDebut|date('Y-m-d')}}</td>
+					<td>{{session.dateDebut|date('d/m/Y')}}</td>
 					<td>{{session.nbPlaces}}</td>
 					<td>{{session.nbInscrits}}</td>
 					{% if (session.close == 1) %}
@@ -28,6 +28,7 @@
 					{% endif %}
 					<td><a href="{{ path('form_armor_admin_session_modif', {'id': session.id}) }}">Modifier</a></td>
 					<td><a href="{{ path('form_armor_admin_session_supp', {'id': session.id}) }}">Supprimer</a></td>
+					<td>{% if session.nbPlaces == session.nbInscrits or (date(session.dateDebut) > date() and session.dateDebut <= date('+8days')) and session.close == 0 %}<a href="{{ path('form_armor_admin_inscriptions_provisoires', {'id': session.id}) }}">Valider</a>{% endif %}</td>
 				</tr>
 			{% endfor %}
 		</tbody>
